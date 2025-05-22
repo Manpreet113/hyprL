@@ -15,7 +15,7 @@
 *.pyc
 __pycache__/
 node_modules/
-/home/Manpreet/dotfiles/.config/hyprL/cache/wallpaper-generated
+/home/Manpreet/dotfiles/.config/hyprL/cache/
 
 # Ignore user-specific session data
 .Xauthority
