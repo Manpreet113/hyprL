@@ -1,0 +1,1 @@
+$(cat ~/.config/hyprL/settings/browser.sh) --new-window https://mail.google.com/mail/u/0/#inbox
