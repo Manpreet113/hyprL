@@ -1,0 +1,24 @@
+# Ignore backup files
+*~
+*.bak
+*.swp
+*.tmp
+
+# Cache and logs
+.cache/
+*.log
+
+# Ignore common compiled or generated files
+*.o
+*.out
+*.class
+*.pyc
+__pycache__/
+node_modules/
+
+# Ignore user-specific session data
+.Xauthority
+.xsession*
+.Xresources
+.DS_Store
+Thumb
