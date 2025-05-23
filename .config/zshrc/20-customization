@@ -1,48 +1,111 @@
+# # -----------------------------------------------------
+# # CUSTOMIZATION
+# # -----------------------------------------------------
+# POSH=agnoster
+
+# # -----------------------------------------------------
+# # oh-myzsh themes: https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
+# # -----------------------------------------------------
+# # ZSH_THEME=robbyrussell
+
+# # -----------------------------------------------------
+# # oh-myzsh plugins
+# # -----------------------------------------------------
+# plugins=(
+#     git
+#     sudo
+#     archlinux
+#     zsh-autosuggestions
+#     fast-syntax-highlighting
+#     nvm
+# )
+
+# # Set-up oh-my-zsh
+# source $ZSH/oh-my-zsh.sh
+
+# # -----------------------------------------------------
+# # Set-up FZF key bindings (CTRL R for fuzzy history finder)
+# # -----------------------------------------------------
+# source <(fzf --zsh)
+
+# # zsh history
+# HISTFILE=~/.zsh_history
+# HISTSIZE=10000
+# SAVEHIST=10000
+# setopt appendhistory
+
+# # -----------------------------------------------------
+# # Prompt
+# # -----------------------------------------------------
+# # eval "$(oh-my-posh init zsh --config $HOME/.config/ohmyposh/zen.toml)"
+
+# #eval "$(oh-my-posh init zsh --config $HOME/.config/ohmyposh/EDM115-newline.omp.json)"
+# source ~/.cache/omp.zsh
+
+
+# # Shipped Theme
+# # eval "$(oh-my-posh init zsh --config /usr/share/oh-my-posh/themes/agnoster.omp.json)"
+
+# eval "$(thefuck --alias)"
+
 # -----------------------------------------------------
-# CUSTOMIZATION
+# CUSTOMIZATION (lazy-loaded for speed)
 # -----------------------------------------------------
+
 POSH=agnoster
 
-# -----------------------------------------------------
-# oh-myzsh themes: https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-# -----------------------------------------------------
-# ZSH_THEME=robbyrussell
-
-# -----------------------------------------------------
-# oh-myzsh plugins
-# -----------------------------------------------------
+# Plugins you wanna load eventually
 plugins=(
     git
     sudo
-    web-search
     archlinux
     zsh-autosuggestions
-    zsh-syntax-highlighting
     fast-syntax-highlighting
-    copyfile
-    copybuffer
-    dirhistory
+    nvm
 )
 
-# Set-up oh-my-zsh
-source $ZSH/oh-my-zsh.sh
+# Lazy load oh-my-zsh and related stuff on first prompt
+autoload -Uz add-zsh-hook
 
-# -----------------------------------------------------
-# Set-up FZF key bindings (CTRL R for fuzzy history finder)
-# -----------------------------------------------------
-source <(fzf --zsh)
+function load_omz() {
+    # Only load once
+    if [[ -z $OMZ_LOADED ]]; then
+        source $ZSH/oh-my-zsh.sh
+        eval "$(thefuck --alias)"
+        OMZ_LOADED=1
+        # Remove hook so it doesn't run again
+        add-zsh-hook -d precmd load_omz
+    fi
+}
 
-# zsh history
+add-zsh-hook precmd load_omz
+
+# Lazy load fzf key bindings on first CTRL-R press
+fzf_loaded=0
+
+function load_fzf() {
+    if (( fzf_loaded == 0 )); then
+        source <(fzf --zsh)
+        fzf_loaded=1
+    fi
+}
+
+# Bind CTRL-R to lazy load fzf then run fzf widget
+bindkey '^R' run-fzf-widget
+
+function run-fzf-widget() {
+    load_fzf
+    zle backward-kill-word
+    zle history-incremental-search-backward
+}
+
+zle -N run-fzf-widget
+
+# zsh history settings (can stay)
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
 setopt appendhistory
 
-# -----------------------------------------------------
-# Prompt
-# -----------------------------------------------------
-# eval "$(oh-my-posh init zsh --config $HOME/.config/ohmyposh/zen.toml)"
-eval "$(oh-my-posh init zsh --config $HOME/.config/ohmyposh/EDM115-newline.omp.json)"
-
-# Shipped Theme
-# eval "$(oh-my-posh init zsh --config /usr/share/oh-my-posh/themes/agnoster.omp.json)"
+# Prompt: just source cached oh-my-posh theme once (fast)
+source ~/.cache/omp.zsh
