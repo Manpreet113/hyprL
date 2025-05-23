@@ -8,7 +8,7 @@ set -e
 
 REPO="https://github.com/Manpreet113/hyprL.git"
 CONFIG_DIR="$HOME/.config"
-DOTFILES_DIR="$HOME/.hyprL"
+DOTFILES_DIR="$HOME/dotfiles"
 
 # Colors
 GREEN="\033[1;32m"
@@ -16,7 +16,9 @@ RED="\033[1;31m"
 NC="\033[0m"
 
 # Required packages
-REQUIRED_PKGS=(hyprland git rofi waybar kitty dunst nwg-dock-hyprland nautilus networkmanager network-manager-applet wget unzip gum rsync git xdg-desktop-portal-hyprland)
+REQUIRED_PKGS=(hyprland git rofi wayland wayland-protocols libinput libxkbcommon mesa vulkan-intel
+ vulkan-mesa-layers xdg-desktop-portal wlroots waybar kitty dunst nwg-dock-hyprland nautilus networkmanager 
+ network-manager-applet wget unzip gum rsync xdg-desktop-portal-hyprland )
 
 # Helper: Print a banner
 echo_banner() {
@@ -28,6 +30,9 @@ echo_banner() {
     echo "  |_| |_|\___/|_| |_| |_|_.__/  HyprL Setup"
     echo -e "${NC}"
 }
+
+# Install yay and update system
+sudo pacman -S --needed base-devel git --noconfirm && cd /opt && sudo git clone https://aur.archlinux.org/yay.git && sudo chown -R $USER:$USER yay && cd yay && makepkg -si
 
 # Helper: Install missing packages
 install_packages() {
@@ -58,12 +63,15 @@ backup_configs() {
 		if [ -d "$CONFIG_DIR/$dir" ]; then
             	echo "-- Backing up $dir"
             	mv "$CONFIG_DIR/$dir" "$BACKUP_DIR/"
+                echo ":: Backup stored in $BACKUP_DIR"
         	fi
     	done
     else
+        echo -e "${RED}:: No existing configs found...${NC}"
+        echo -e "${GREEN}:: Creating config directories...${NC}"
 	    mkdir "$CONFIG_DIR"
 
-    	echo ":: Backup stored in $BACKUP_DIR"
+    	
     fi
 }
 
