@@ -50,17 +50,21 @@ install_packages() {
 # Backup existing configs
 backup_configs() {
     echo -e "${GREEN}:: Backing up existing configs...${NC}"
-    BACKUP_DIR="$HOME/.config-backup-$(date +%s)"
-    mkdir -p "$BACKUP_DIR"
+    if [ -d "$CONFIG_DIR" ]; then
+        BACKUP_DIR="$HOME/.config-backup-$(date +%s)"
+        mkdir -p "$BACKUP_DIR"
 
-    for dir in $(ls "$DOTFILES_DIR"); do
-        if [ -d "$CONFIG_DIR/$dir" ]; then
-            echo "-- Backing up $dir"
-            mv "$CONFIG_DIR/$dir" "$BACKUP_DIR/"
-        fi
-    done
+    	for dir in $(ls "$DOTFILES_DIR"); do
+		if [ -d "$CONFIG_DIR/$dir" ]; then
+            	echo "-- Backing up $dir"
+            	mv "$CONFIG_DIR/$dir" "$BACKUP_DIR/"
+        	fi
+    	done
+    else
+	    mkdir "$CONFIG_DIR"
 
-    echo ":: Backup stored in $BACKUP_DIR"
+    	echo ":: Backup stored in $BACKUP_DIR"
+    fi
 }
 
 # Clone the dotfiles
