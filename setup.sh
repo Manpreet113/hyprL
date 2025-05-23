@@ -16,7 +16,7 @@ RED="\033[1;31m"
 NC="\033[0m"
 
 # Required packages
-REQUIRED_PKGS=(hyprland git rofi waybar kitty dunst nwg-dock-hyprland nautilus gtk-3 gtk-4 wget unzip gum rsync git xdg-desktop-portal-hyprland)
+REQUIRED_PKGS=(hyprland git rofi waybar kitty dunst nwg-dock-hyprland nautilus NetworkManager network-manager-applet wget unzip gum rsync git xdg-desktop-portal-hyprland)
 
 # Helper: Print a banner
 echo_banner() {
