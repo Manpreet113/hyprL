@@ -13,7 +13,9 @@ DOTFILES_DIR="$HOME/dotfiles"
 # Colors
 GREEN="\033[1;32m"
 RED="\033[1;31m"
+BLUE="\033[1;34m"
 NC="\033[0m"
+
 
 # Required packages
 REQUIRED_PKGS=(hyprland git rofi wayland wayland-protocols libinput libxkbcommon mesa vulkan-intel
@@ -23,11 +25,22 @@ REQUIRED_PKGS=(hyprland git rofi wayland wayland-protocols libinput libxkbcommon
 # Helper: Print a banner
 echo_banner() {
     echo -e "${GREEN}"
-    echo "   _                      _     "
-    echo "  | |__   ___  _ __ ___ | |__  "
-    echo "  | '_ \ / _ \| '_ \` _ \| '_ \ "
-    echo "  | | | | (_) | | | | | | |_) |"
-    echo "  |_| |_|\___/|_| |_| |_|_.__/  HyprL Setup"
+    echo "
+
+ __                                      ________                                    
+|  \                                    |        \                                   
+| $$____   __    __   ______    ______  | $$$$$$$$ ______    _______   ______        
+| $$    \ |  \  |  \ /      \  /      \ | $$__    |      \  /       \ /      \       
+| $$$$$$$\| $$  | $$|  $$$$$$\|  $$$$$$\| $$  \    \$$$$$$\|  $$$$$$$|  $$$$$$\      
+| $$  | $$| $$  | $$| $$  | $$| $$   \$$| $$$$$   /      $$ \$$    \ | $$    $$      
+| $$  | $$| $$__/ $$| $$__/ $$| $$      | $$_____|  $$$$$$$ _\$$$$$$\| $$$$$$$$      
+| $$  | $$ \$$    $$| $$    $$| $$      | $$     \\$$    $$|       $$ \$$     \      
+ \$$   \$$ _\$$$$$$$| $$$$$$$  \$$       \$$$$$$$$ \$$$$$$$ \$$$$$$$   \$$$$$$$      
+          |  \__| $$| $$                                                             
+           \$$    $$| $$                                                             
+            \$$$$$$  \$$                                                             
+
+"
     echo -e "${NC}"
 }
 
