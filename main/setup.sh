@@ -196,7 +196,6 @@ update_system         # Update system packages
 get_yay               # Install yay if missing
 install_packages      # Install required packages
 check_folder          # Check if .config folder exist
-backup_configs        # Backup existing configs
 clone_dotfiles        # Clone or use dotfiles repo
 symlink_configs       # Symlink new configs
 ask_reboot            # Prompt for reboot
