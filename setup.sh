@@ -4,7 +4,8 @@
 # Author: Manpreet
 # Repo: https://github.com/Manpreet113/hyprL
 
-set -e
+set -Eeuo pipefail
+trap 'echo "Error occurred at line $LINENO"; exit 1' ERR
 
 REPO="https://github.com/Manpreet113/hyprL.git"
 CONFIG_DIR="$HOME/.config"
@@ -24,28 +25,53 @@ REQUIRED_PKGS=(hyprland git rofi wayland wayland-protocols libinput libxkbcommon
 
 # Helper: Print a banner
 echo_banner() {
-    echo -e "${GREEN}"
-    echo "
+    echo -e "${BLUE}"
+    echo " __                                      ________                                "    
+    echo "|  \                                    |        \                               "    
+    echo "| $$____   __    __   ______    ______  | $$$$$$$$ ______    _______   ______    "    
+    echo "| $$    \ |  \  |  \ /      \  /      \ | $$__    |      \  /       \ /      \   "    
+    echo "| $$$$$$$\| $$  | $$|  $$$$$$\|  $$$$$$\| $$  \    \$$$$$$\|  $$$$$$$|  $$$$$$\  "    
+    echo "| $$  | $$| $$  | $$| $$  | $$| $$   \$$| $$$$$   /      $$ \$$    \ | $$    $$  "    
+    echo "| $$  | $$| $$__/ $$| $$__/ $$| $$      | $$_____|  $$$$$$$ _\$$$$$$\| $$$$$$$$  "    
+    echo "| $$  | $$ \$$    $$| $$    $$| $$      | $$     \\$$    $$|       $$ \$$     \  "    
+    echo " \$$   \$$ _\$$$$$$$| $$$$$$$  \$$       \$$$$$$$$ \$$$$$$$ \$$$$$$$   \$$$$$$$  "    
+    echo "          |  \__| $$| $$                                       hyprL setup script"    
+    echo "           \$$    $$| $$                                                         "    
+    echo "            \$$$$$$  \$$                                                         "   
 
- __                                      ________                                    
-|  \                                    |        \                                   
-| $$____   __    __   ______    ______  | $$$$$$$$ ______    _______   ______        
-| $$    \ |  \  |  \ /      \  /      \ | $$__    |      \  /       \ /      \       
-| $$$$$$$\| $$  | $$|  $$$$$$\|  $$$$$$\| $$  \    \$$$$$$\|  $$$$$$$|  $$$$$$\      
-| $$  | $$| $$  | $$| $$  | $$| $$   \$$| $$$$$   /      $$ \$$    \ | $$    $$      
-| $$  | $$| $$__/ $$| $$__/ $$| $$      | $$_____|  $$$$$$$ _\$$$$$$\| $$$$$$$$      
-| $$  | $$ \$$    $$| $$    $$| $$      | $$     \\$$    $$|       $$ \$$     \      
- \$$   \$$ _\$$$$$$$| $$$$$$$  \$$       \$$$$$$$$ \$$$$$$$ \$$$$$$$   \$$$$$$$      
-          |  \__| $$| $$                                                             
-           \$$    $$| $$                                                             
-            \$$$$$$  \$$                                                             
-
-"
     echo -e "${NC}"
 }
 
-# Install yay and update system
-sudo pacman -S --needed base-devel git --noconfirm && cd /opt && sudo git clone https://aur.archlinux.org/yay.git && sudo chown -R $USER:$USER yay && cd yay && makepkg -si
+# Ask for sudo access
+ask_sudo() {
+    # Ask for sudo password upfront
+if sudo -v; then
+    # Keep sudo alive while the script runs
+    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+else
+    echo -e "${RED}:: Failed to obtain sudo access. Exiting...${NC}"
+    exit 1
+fi
+}
+
+# Run system update
+update_system() {
+    echo -e "${GREEN}:: Updating system packages...${NC}"
+    sudo pacman -Syu --noconfirm
+}
+
+# Install AUR helper (yay)
+get_yay() {
+    if ! command -v yay &> /dev/null; then
+    echo ":: yay not found, installing..."
+    tmpdir=$(mktemp -d)
+    git clone https://aur.archlinux.org/yay.git "$tmpdir"
+    pushd "$tmpdir" || exit
+    makepkg -si --noconfirm
+    popd
+    rm -rf "$tmpdir"
+fi
+}
 
 # Helper: Install missing packages
 install_packages() {
@@ -98,9 +124,27 @@ clone_dotfiles() {
 # Symlink configs
 symlink_configs() {
     echo -e "${GREEN}:: Creating symlinks...${NC}"
-    for dir in $(ls "$DOTFILES_DIR"); do
-        ln -sf "$DOTFILES_DIR/$dir" "$CONFIG_DIR/$dir"
-    done
+    shopt -s dotglob nullglob
+
+for src in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.*; do
+    base=$(basename "$src")
+
+    # Skip '.' and '..' which show up with dotglob
+    [[ "$base" == "." || "$base" == ".." ]] && continue
+
+    dest="$CONFIG_DIR/$base"
+
+    # If destination exists and is not a symlink, skip
+    if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+        echo -e "${RED}:: $dest exists and is not a symlink. Skipping...${NC}"
+        continue
+    fi
+
+    ln -sf "$src" "$dest"
+done
+
+shopt -u dotglob nullglob
+
 }
 
 # Ask for reboot
@@ -115,6 +159,9 @@ ask_reboot() {
 
 # === Main Script ===
 echo_banner
+ask_sudo
+update_system
+get_yay
 install_packages
 clone_dotfiles
 backup_configs
