@@ -84,7 +84,7 @@ get_yay() {
         tmpdir=$(mktemp -d)
         git clone https://aur.archlinux.org/yay.git "$tmpdir"
         pushd "$tmpdir" >/dev/null
-        makepkg -si --answerclean None || {
+        makepkg -si || {
             echo -e "${RED}:: Failed to install yay. Check AUR or build deps.${NC}"
             exit 1
         }
