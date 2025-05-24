@@ -7,7 +7,6 @@ This setup is designed for **Arch Linux** users who want a fully configured Wayl
 > ⚠️ Built for people who know what they're doing. Or at least pretending to. 😉
 
 ---
-
 ## 🛠️ Features
 
 - 🔹 Tiled Wayland WM: **Hyprland**
@@ -25,7 +24,6 @@ This setup is designed for **Arch Linux** users who want a fully configured Wayl
 - 🔗 Symlinks your new dotfiles into `~/.config`
 
 ---
-
 ## ⚡ Quick Install (for existing Arch users)
 
 You don’t even have to clone the repo manually. Just run this bad boy:
@@ -33,7 +31,6 @@ You don’t even have to clone the repo manually. Just run this bad boy:
 ```bash
 bash <(curl -sL https://raw.githubusercontent.com/Manpreet113/hyprL/main/setup.sh)
 ```
-
 ### This will:
 
 1. Update your system
@@ -49,7 +46,6 @@ bash <(curl -sL https://raw.githubusercontent.com/Manpreet113/hyprL/main/setup.s
 * Some patience during install
 
 ---
-
 ## 🧩 Optional
 
 * You can clone the repo manually if you want to inspect or customize:
