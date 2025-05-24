@@ -5,25 +5,26 @@
 # Repo: https://github.com/Manpreet113/hyprL
 
 set -Eeuo pipefail
-trap 'echo "Error occurred at line $LINENO"; exit 1' ERR
+trap 'echo -e "\033[1;31mError occurred at line $LINENO. Exiting...\033[0m"; exit 1' ERR
 
 REPO="https://github.com/Manpreet113/hyprL.git"
 CONFIG_DIR="$HOME/.config"
 DOTFILES_DIR="$HOME/dotfiles"
 
-# Colors
+# Colors for output formatting
 GREEN="\033[1;32m"
 RED="\033[1;31m"
 BLUE="\033[1;34m"
 NC="\033[0m"
 
-
-# Required packages
+# List of required packages to install
 REQUIRED_PKGS=(hyprland git rofi wayland wayland-protocols libinput libxkbcommon mesa vulkan-intel
- vulkan-mesa-layers xdg-desktop-portal wlroots waybar kitty dunst nwg-dock-hyprland nautilus networkmanager 
- network-manager-applet wget unzip gum rsync xdg-desktop-portal-hyprland )
+vulkan-mesa-layers xdg-desktop-portal wlroots waybar kitty dunst nwg-dock-hyprland nautilus networkmanager
+network-manager-applet wget unzip gum rsync xdg-desktop-portal-hyprland hyprlock)
 
-# Helper: Print a banner
+# === Functions ===
+
+# Prints a banner for the script
 echo_banner() {
     echo -e "${BLUE}"
     echo " __                                      ________                                "    
@@ -38,42 +39,60 @@ echo_banner() {
     echo "          |  \__| $$| $$                                       hyprL setup script"    
     echo "           \$$    $$| $$                                                         "    
     echo "            \$$$$$$  \$$                                                         "   
-
     echo -e "${NC}"
 }
 
-# Ask for sudo access
-ask_sudo() {
-    # Ask for sudo password upfront
-if sudo -v; then
-    # Keep sudo alive while the script runs
-    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-else
-    echo -e "${RED}:: Failed to obtain sudo access. Exiting...${NC}"
-    exit 1
-fi
+# Prevent running the script as root
+check_root() {
+    if [ "$EUID" -eq 0 ]; then
+        echo -e "${RED}:: Don't run this script as root!${NC}"
+        exit 1
+    fi
 }
 
-# Run system update
+# Check for an active internet connection
+check_internet() {
+    echo -e "${GREEN}:: Checking internet connection...${NC}"
+    if ! ping -q -c 1 archlinux.org &>/dev/null; then
+        echo -e "${RED}:: No internet detected. Connect first.${NC}"
+        exit 1
+    fi
+}
+
+# Ask for sudo access and keep it alive
+ask_sudo() {
+    if sudo -v; then
+        while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+    else
+        echo -e "${RED}:: Failed to obtain sudo access. Exiting...${NC}"
+        exit 1
+    fi
+}
+
+# Update all system packages
 update_system() {
     echo -e "${GREEN}:: Updating system packages...${NC}"
-    sudo pacman -Syu --noconfirm
+    sudo pacman -Syu --noconfirm 
+    sudo pacman -S --noconfirm --needed base-devel git
 }
 
-# Install AUR helper (yay)
+# Install yay AUR helper if not present
 get_yay() {
-    if ! command -v yay &> /dev/null; then
-    echo ":: yay not found, installing..."
-    tmpdir=$(mktemp -d)
-    git clone https://aur.archlinux.org/yay.git "$tmpdir"
-    pushd "$tmpdir" || exit
-    makepkg -si --noconfirm
-    popd
-    rm -rf "$tmpdir"
-fi
+    if ! command -v yay &>/dev/null; then
+        echo -e "${GREEN}:: yay not found. Installing...${NC}"
+        tmpdir=$(mktemp -d)
+        git clone https://aur.archlinux.org/yay.git "$tmpdir"
+        pushd "$tmpdir" >/dev/null
+        makepkg -si --noconfirm --answerdiff None --answerclean None || {
+            echo -e "${RED}:: Failed to install yay. Check AUR or build deps.${NC}"
+            exit 1
+        }
+        popd >/dev/null
+        rm -rf "$tmpdir"
+    fi
 }
 
-# Helper: Install missing packages
+# Install all required packages using yay
 install_packages() {
     echo -e "${GREEN}:: Checking required packages...${NC}"
     missing=()
@@ -84,86 +103,88 @@ install_packages() {
     done
 
     if [ ${#missing[@]} -eq 0 ]; then
-        echo ":: All packages already installed."
+        echo ":: All required packages are already installed."
     else
-        echo ":: Installing missing packages: ${missing[*]}"
-        sudo pacman -S --noconfirm "${missing[@]}"
+        echo ":: Installing: ${missing[*]}"
+        yay -S --needed --noconfirm "${missing[@]}"
     fi
 }
 
-# Backup existing configs
+# Clone dotfiles repo or use current directory if already inside a git repo
+clone_dotfiles() {
+    echo -e "${GREEN}:: Setting up dotfiles...${NC}"
+
+    if git rev-parse --is-inside-work-tree &>/dev/null; then
+        echo ":: Already inside a git repo. Using current directory."
+        DOTFILES_DIR="$(pwd)"
+    else
+        DOTFILES_DIR="$HOME/dotfiles"
+        echo ":: Cloning repo to $DOTFILES_DIR"
+        rm -rf "$DOTFILES_DIR"
+        git clone --depth=1 "$REPO" "$DOTFILES_DIR"
+        rm -rf "$DOTFILES_DIR/.git"
+    fi
+}
+
+# Backup existing configs in .config before symlinking new ones
 backup_configs() {
     echo -e "${GREEN}:: Backing up existing configs...${NC}"
     if [ -d "$CONFIG_DIR" ]; then
         BACKUP_DIR="$HOME/.config-backup-$(date +%s)"
         mkdir -p "$BACKUP_DIR"
-
-    	for dir in $(ls "$DOTFILES_DIR"); do
-		if [ -d "$CONFIG_DIR/$dir" ]; then
-            	echo "-- Backing up $dir"
-            	mv "$CONFIG_DIR/$dir" "$BACKUP_DIR/"
-                echo ":: Backup stored in $BACKUP_DIR"
-        	fi
-    	done
+        for dir in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.*; do
+            base=$(basename "$dir")
+            [[ "$base" =~ ^(\.|\.\.|\.git|\.gitignore|\.gitattributes)$ ]] && continue
+            if [ -e "$CONFIG_DIR/$base" ]; then
+                echo "-- Backing up $base"
+                mv "$CONFIG_DIR/$base" "$BACKUP_DIR/"
+            fi
+        done
+        echo ":: Backup stored at $BACKUP_DIR"
     else
-        echo -e "${RED}:: No existing configs found...${NC}"
-        echo -e "${GREEN}:: Creating config directories...${NC}"
-	    mkdir "$CONFIG_DIR"
-
-    	
+        mkdir -p "$CONFIG_DIR"
     fi
 }
 
-# Clone the dotfiles
-clone_dotfiles() {
-    echo -e "${GREEN}:: Cloning hyprL dotfiles...${NC}"
-    rm -rf "$DOTFILES_DIR"
-    git clone "$REPO" "$DOTFILES_DIR"
-}
-
-# Symlink configs
+# Symlink dotfiles from repo to .config directory
 symlink_configs() {
     echo -e "${GREEN}:: Creating symlinks...${NC}"
     shopt -s dotglob nullglob
+    for src in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.*; do
+        base=$(basename "$src")
+        [[ "$base" =~ ^(\.|\.\.|\.git|\.gitignore|\.gitattributes)$ ]] && continue
 
-for src in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.*; do
-    base=$(basename "$src")
+        dest="$CONFIG_DIR/$base"
 
-    # Skip '.' and '..' which show up with dotglob
-    [[ "$base" == "." || "$base" == ".." ]] && continue
+        if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+            echo -e "${RED}:: $dest exists and is not a symlink. Skipping...${NC}"
+            continue
+        fi
 
-    dest="$CONFIG_DIR/$base"
-
-    # If destination exists and is not a symlink, skip
-    if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-        echo -e "${RED}:: $dest exists and is not a symlink. Skipping...${NC}"
-        continue
-    fi
-
-    ln -sf "$src" "$dest"
-done
-
-shopt -u dotglob nullglob
-
+        ln -sf "$src" "$dest"
+    done
+    shopt -u dotglob nullglob
 }
 
-# Ask for reboot
+# Ask user to reboot after setup
 ask_reboot() {
     echo -e "${GREEN}:: HyprL setup complete.${NC}"
     read -p "Reboot now to apply changes? [y/N]: " choice
     case "$choice" in
         y|Y ) systemctl reboot;;
-        * ) echo ":: Reboot cancelled. You can reboot manually later.";;
+        * ) echo ":: Reboot skipped. Restart manually later.";;
     esac
 }
 
-# === Main Script ===
-echo_banner
-ask_sudo
-update_system
-get_yay
-install_packages
-clone_dotfiles
-backup_configs
-symlink_configs
-ask_reboot
+# === Main ===
+echo_banner           # Print banner
+check_root            # Ensure not running as root
+check_internet        # Check for internet connection
+ask_sudo              # Ask for sudo and keep alive
+update_system         # Update system packages
+get_yay               # Install yay if missing
+install_packages      # Install required packages
+clone_dotfiles        # Clone or use dotfiles repo
+backup_configs        # Backup existing configs
+symlink_configs       # Symlink new configs
+ask_reboot            # Prompt for reboot
