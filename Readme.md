@@ -40,7 +40,10 @@ bash <(curl -sL https://raw.githubusercontent.com/Manpreet113/hyprL/main/setup.s
 5. Symlink new configs from the repo.
 6. Ask if you wanna reboot.
 
-* 🧠 Arch Linux (btw)## 📦 Requirements
+---
+## 📦 Requirements
+
+* 🧠 Arch Linux (btw)
 * Internet connection
 * Sudo access
 * Some patience during install
