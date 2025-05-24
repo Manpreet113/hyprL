@@ -9,12 +9,13 @@ trap 'echo -e "\033[1;31mError occurred at line $LINENO. Exiting...\033[0m"; exi
 
 REPO="https://github.com/Manpreet113/hyprL.git"
 CONFIG_DIR="$HOME/.config"
-DOTFILES_DIR="$HOME/dotfiles"
+DOTCONFIG_DIR="$HOME/dotfiles/.config"
 
 # Colors for output formatting
 GREEN="\033[1;32m"
 RED="\033[1;31m"
 BLUE="\033[1;34m"
+LGREEN="\033[1;92m"
 NC="\033[0m"
 
 # List of required packages to install
@@ -129,38 +130,48 @@ clone_dotfiles() {
     fi
 }
 
+# Check for .config folder and create one if not found
+check_folder(){
+    if [ -d "$CONFIG_DIR" ]; then
+        echo -e "${LGREEN}:: Config folder found. ${NC}"
+        read -p $'\e[33mWould you like to keep a backup? [y/N]: \e[0m' bakpref
+    else
+        echo -e "${LGREEN}:: No config folder found. Creating new one! ${NC}"
+        mkdir "$CONFIG_DIR"
+    fi
+}
+
 # Backup existing configs in .config before symlinking new ones
 backup_configs() {
-    echo -e "${GREEN}:: Backing up existing configs...${NC}"
-    if [ -d "$CONFIG_DIR" ]; then
-        BACKUP_DIR="$HOME/.config-backup-$(date +%s)"
-        mkdir -p "$BACKUP_DIR"
-        for dir in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.*; do
-            base=$(basename "$dir")
-            [[ "$base" =~ ^(\.|\.\.|\.git|\.gitignore|\.gitattributes)$ ]] && continue
-            if [ -e "$CONFIG_DIR/$base" ]; then
-                echo "-- Backing up $base"
-                mv "$CONFIG_DIR/$base" "$BACKUP_DIR/"
-            fi
-        done
-        echo ":: Backup stored at $BACKUP_DIR"
-    else
-        mkdir -p "$CONFIG_DIR"
-    fi
+    echo -e "${GREEN}:: Backing up ${} configs...${NC}"
+    # if [ -d "$CONFIG_DIR" ]; then
+    #     BACKUP_DIR="$HOME/.config-backup-$(date +%s)"
+    #     mkdir -p "$BACKUP_DIR"
+    #     for dir in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.*; do
+    #         base=$(basename "$dir")
+    #         [[ "$base" =~ ^(\.|\.\.|\.git|\.gitignore|\.gitattributes)$ ]] && continue
+    #         if [ -e "$CONFIG_DIR/$base" ]; then
+    #             echo "-- Backing up $base"
+    #             mv "$CONFIG_DIR/$base" "$BACKUP_DIR/"
+    #         fi
+    #     done
+    #     echo ":: Backup stored at $BACKUP_DIR"
+    # else
+    #     mkdir -p "$CONFIG_DIR"
+    # fi
 }
 
 # Symlink dotfiles from repo to .config directory
 symlink_configs() {
     echo -e "${GREEN}:: Creating symlinks...${NC}"
     shopt -s dotglob nullglob
-    for src in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.*; do
+    for src in "$DOTCONFIG_DIR"/* "$DOTCONFIG_DIR"/.*; do
         base=$(basename "$src")
-        [[ "$base" =~ ^(\.|\.\.|\.git|\.gitignore|\.gitattributes)$ ]] && continue
 
         dest="$CONFIG_DIR/$base"
 
         if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-            echo -e "${RED}:: $dest exists and is not a symlink. Skipping...${NC}"
+            
             continue
         fi
 
@@ -187,6 +198,7 @@ ask_sudo              # Ask for sudo and keep alive
 update_system         # Update system packages
 get_yay               # Install yay if missing
 install_packages      # Install required packages
+check_folder          # Check if .config folder exist
 backup_configs        # Backup existing configs
 clone_dotfiles        # Clone or use dotfiles repo
 symlink_configs       # Symlink new configs
