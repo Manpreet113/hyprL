@@ -21,7 +21,7 @@ NC="\033[0m"
 REQUIRED_PKGS=(hyprland git rofi wayland wayland-protocols libinput libxkbcommon mesa vulkan-intel
 vulkan-mesa-layers xdg-desktop-portal wlroots waybar kitty dunst nwg-dock-hyprland nautilus networkmanager
 network-manager-applet wget unzip gum rsync xdg-desktop-portal-hyprland hyprlock hypridle swaync hyprshade swww fastfetch matugen nvim waypaper wlogout zshrc
-grim slurp swappy cliphist hyprpaper )
+grim slurp swappy cliphist hyprpaper pipewire)
 
 # === Functions ===
 
@@ -84,7 +84,7 @@ get_yay() {
         tmpdir=$(mktemp -d)
         git clone https://aur.archlinux.org/yay.git "$tmpdir"
         pushd "$tmpdir" >/dev/null
-        makepkg -si --noconfirm --answerdiff None --answerclean None || {
+        makepkg -si --answerclean None || {
             echo -e "${RED}:: Failed to install yay. Check AUR or build deps.${NC}"
             exit 1
         }
