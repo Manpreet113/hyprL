@@ -20,7 +20,8 @@ NC="\033[0m"
 # List of required packages to install
 REQUIRED_PKGS=(hyprland git rofi wayland wayland-protocols libinput libxkbcommon mesa vulkan-intel
 vulkan-mesa-layers xdg-desktop-portal wlroots waybar kitty dunst nwg-dock-hyprland nautilus networkmanager
-network-manager-applet wget unzip gum rsync xdg-desktop-portal-hyprland hyprlock)
+network-manager-applet wget unzip gum rsync xdg-desktop-portal-hyprland hyprlock hypridle swaync hyprshade swww fastfetch matugen nvim waypaper wlogout zshrc
+grim slurp swappy cliphist hyprpaper )
 
 # === Functions ===
 
