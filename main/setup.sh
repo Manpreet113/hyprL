@@ -20,7 +20,7 @@ NC="\033[0m"
 # List of required packages to install
 REQUIRED_PKGS=(hyprland git rofi wayland wayland-protocols libinput libxkbcommon mesa vulkan-intel
 vulkan-mesa-layers xdg-desktop-portal wlroots waybar kitty dunst nwg-dock-hyprland nautilus networkmanager
-network-manager-applet wget unzip gum rsync xdg-desktop-portal-hyprland hyprlock hypridle swaync hyprshade swww fastfetch matugen nvim waypaper wlogout zshrc
+network-manager-applet wget unzip gum rsync xdg-desktop-portal-hyprland hyprlock hypridle swaync hyprshade swww fastfetch matugen nvim waypaper wlogout zsh
 grim slurp swappy cliphist hyprpaper pipewire)
 
 # === Functions ===
@@ -119,11 +119,13 @@ clone_dotfiles() {
         echo ":: Already inside a git repo. Using current directory."
         DOTFILES_DIR="$(pwd)"
     else
-        DOTFILES_DIR="$HOME/dotfiles"
         echo ":: Cloning repo to $DOTFILES_DIR"
         rm -rf "$DOTFILES_DIR"
-        git clone --depth=1 "$REPO" "$DOTFILES_DIR"
-        rm -rf "$DOTFILES_DIR/.git"
+        git clone --filter=blob:none --no-checkout "$REPO"
+        cd hyprL
+        git sparse-checkout init --cone
+        git sparse-checkout set dotfiles
+        git checkout master
     fi
 }
 
@@ -185,7 +187,7 @@ ask_sudo              # Ask for sudo and keep alive
 update_system         # Update system packages
 get_yay               # Install yay if missing
 install_packages      # Install required packages
-clone_dotfiles        # Clone or use dotfiles repo
 backup_configs        # Backup existing configs
+clone_dotfiles        # Clone or use dotfiles repo
 symlink_configs       # Symlink new configs
 ask_reboot            # Prompt for reboot
