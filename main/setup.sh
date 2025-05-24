@@ -16,6 +16,8 @@ GREEN="\033[1;32m"
 RED="\033[1;31m"
 BLUE="\033[1;34m"
 LGREEN="\033[1;92m"
+LRED="\033[1;91m"
+LBLUE="\033[1;94m"
 NC="\033[0m"
 
 # List of required packages to install
@@ -38,7 +40,7 @@ echo_banner() {
     echo "| \$\$  | \$\$| \$\$__/ \$\$| \$\$__/ \$\$| \$\$      | \$\$_____|  \$\$\$\$\$\$\$ _\\$\$\$\$\$\$\| \$\$\$\$\$\$\$\$  "    
     echo "| \$\$  | \$\$ \\$\$    \$\$| \$\$    \$\$| \$\$      | \$\$     \\\$\$    \$\$|       \$\$ \\$\$     \  "    
     echo " \\$\$   \\$\$ _\\$\$\$\$\$\$\$| \$\$\$\$\$\$\$  \\$\$       \\$\$\$\$\$\$\$\$ \\$\$\$\$\$\$\$ \\$\$\$\$\$\$\$   \\$\$\$\$\$\$\$  "    
-    echo "          |  \__| \$\$| \$\$                                       hyprL setup script"    
+    echo "          |  \__| \$\$| \$\$                                       hyprL setup script by Humane"    
     echo "           \\$\$    \$\$| \$\$                                                         "    
     echo "            \\$\$\$\$\$\$  \\$\$                                                         "   
     echo -e "${NC}"
@@ -141,44 +143,39 @@ check_folder(){
     fi
 }
 
-# Backup existing configs in .config before symlinking new ones
-backup_configs() {
-    echo -e "${GREEN}:: Backing up ${} configs...${NC}"
-    # if [ -d "$CONFIG_DIR" ]; then
-    #     BACKUP_DIR="$HOME/.config-backup-$(date +%s)"
-    #     mkdir -p "$BACKUP_DIR"
-    #     for dir in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.*; do
-    #         base=$(basename "$dir")
-    #         [[ "$base" =~ ^(\.|\.\.|\.git|\.gitignore|\.gitattributes)$ ]] && continue
-    #         if [ -e "$CONFIG_DIR/$base" ]; then
-    #             echo "-- Backing up $base"
-    #             mv "$CONFIG_DIR/$base" "$BACKUP_DIR/"
-    #         fi
-    #     done
-    #     echo ":: Backup stored at $BACKUP_DIR"
-    # else
-    #     mkdir -p "$CONFIG_DIR"
-    # fi
-}
-
 # Symlink dotfiles from repo to .config directory
 symlink_configs() {
     echo -e "${GREEN}:: Creating symlinks...${NC}"
     shopt -s dotglob nullglob
+
     for src in "$DOTCONFIG_DIR"/* "$DOTCONFIG_DIR"/.*; do
         base=$(basename "$src")
 
-        dest="$CONFIG_DIR/$base"
-
-        if [ -e "$dest" ] && [ ! -L "$dest" ]; then
-            
-            continue
+        if [[ "$base" == "." || "$base" == ".." ]]; then
+        continue
         fi
 
+
+        dest="$CONFIG_DIR/$base"
+
+        if [[ -e "$dest" && ! -L "$dest" ]]; then
+            if [[ "${bakpref,,}" == "y" ]]; then
+                BACKUP_DIR="$HOME/.config-backup-$(date +%s)"
+                mkdir -p "$BACKUP_DIR"
+                mv "$dest" "$BACKUP_DIR"
+                echo -e "${LGREEN}:: Backed up $dest to $BACKUP_DIR${NC}"
+            else
+                rm -rf "$dest"
+                echo -e "${LRED}:: Deleted existing config at $dest${NC}"
+            fi
+        fi
+        echo -e "${LBLUE}:: Linked $src → $dest${NC}"
         ln -sf "$src" "$dest"
     done
+
     shopt -u dotglob nullglob
 }
+
 
 # Ask user to reboot after setup
 ask_reboot() {
